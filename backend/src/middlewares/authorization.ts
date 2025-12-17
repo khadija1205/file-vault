@@ -26,7 +26,7 @@ export const checkFileAccess = async (req: Request, res: Response, next: NextFun
         };
 
         // share access
-        const validShare = file.shares.find((s: Share) => {
+        const validShare = file.shares.find((s) => {
             const isExpired = s.expiryDate && new Date(s.expiryDate) < new Date();
             return s.sharedWithId === userId && !isExpired;
         });
