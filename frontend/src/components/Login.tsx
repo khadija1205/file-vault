@@ -3,7 +3,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useLogin } from '../hooks/useAuth';
 import { loginSchema, type LoginInput } from '../schemas/auth';
 import { Link } from 'react-router-dom';
-import { email } from 'zod';
 
 export const Login = () => {
     const {
@@ -16,12 +15,17 @@ export const Login = () => {
 
     const { mutate, isPending } = useLogin();
 
+    const onSubmit = (data: LoginInput) => {
+        console.log('Form submitted with data:', data); // Debug log
+        mutate(data);
+    };
+
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
             <div className="max-w-md w-full bg-white p-8 rounded-lg shadow">
                 <h2 className="text-3xl font-bold mb-6 text-center">File Sharing Login</h2>
-
-                <form onSubmit={handleSubmit((data) => mutate(data))} className="space-y-4">
+                {/* (data) => mutate(data) */}
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                     <div>
                         <input
                             {...register('email')}
