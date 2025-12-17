@@ -9,11 +9,16 @@ export const uploadFileSchema = z.object({
 
 
 
-export const shareFileSchema = z.object({
-    fileId: z.string(),
-    userId: z.string().optional()
-});
+// export const shareFileSchema = z.object({
+//     fileId: z.string(),
+//     userId: z.string().optional()
+// });
 
+export const shareFileSchema = z.object({
+    fileId: z.string().min(1, 'File ID required'),
+    userIds: z.array(z.string().min(1)).min(1, 'At least one user required'),
+    expiryDays: z.number().optional().default(0)
+});
 
 
 export const generateLinkSchema = z.object({
