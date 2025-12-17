@@ -4,6 +4,12 @@
 
 FileVault is a modern, full-stack file-sharing application that allows users to securely upload, manage, and share files with other users or via shareable links. Built with the latest technologies for type safety, performance, and scalability.
 
+
+## 🌐 Live Application
+
+https://filevault-phi.vercel.app
+
+
 **Key Features:**
 - User authentication with JWT
 - File upload to AWS S3
@@ -181,9 +187,3 @@ json
 
 
 
-
-For issues or questions, refer to the documentation or GitHub issues.
-
----
-
-**Project Status:** ✅ Ready for Development and Deployment
