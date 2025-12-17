@@ -16,26 +16,22 @@ export const checkFileAccess = async (req: Request, res: Response, next: NextFun
             throw new AppError(404, 'File not found');
         }
 
+        
         if (file.ownerId === userId) {
             return next();
         }
 
-        type Share = {
-            sharedWithId: string;
-            expiryDate?: string | Date;
-        };
-
-        // share access
-        const validShare = file.shares.find((s) => {
+        // Check if file is shared with user and not expired
+        const validShare = file.shares.find((s: any) => {
             const isExpired = s.expiryDate && new Date(s.expiryDate) < new Date();
             return s.sharedWithId === userId && !isExpired;
         });
 
         if (!validShare) {
             throw new AppError(403, 'Access denied');
-
-            next();
         }
+
+        next();
     } catch (error) {
         next(error);
     }
