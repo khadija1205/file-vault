@@ -9,7 +9,7 @@ export interface File {
     filename: string;
     fileType: string;
     fileSize: number;
-    firebaseUrl: string;
+    filebaseUrl: string;
     ownerId: string;
     createdAt: string;
 }
