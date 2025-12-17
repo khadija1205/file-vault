@@ -49,7 +49,7 @@
         fileId String @db.ObjectId
         sharedBy User @relation(fields: [sharedById], references: [id], onDelete: Cascade)
         sharedById String @db.ObjectId
-        sharedWith User? @relation("SharedWith", fields: [sharedById], references: [id], onDelete: Cascade)
+        sharedWith User? @relation("SharedWith", fields: [sharedWithId], references: [id], onDelete: Cascade)
         sharedWithId String? @db.ObjectId
         shareLink String? @unique
         expiryDate DateTime?
