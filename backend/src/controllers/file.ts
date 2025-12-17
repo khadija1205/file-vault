@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/prisma';
 import { AppError } from '../types';
-import { uploadToS3, deleteFromS3 } from '../utils/s3';
+import { uploadToS3, deleteFromS3, getPresignedDownloadUrl } from '../utils/s3';
 import { ShareFileInput } from '../schemas/file';
 import crypto from 'crypto';
 
@@ -11,7 +11,6 @@ export const uploadFile = async (req: Request, res: Response, next: NextFunction
             throw new AppError(400, 'No file provided');
         }
 
-        // Validate file size (100MB limit)
         const MAX_FILE_SIZE = 100 * 1024 * 1024;
         if (req.file.size > MAX_FILE_SIZE) {
             throw new AppError(400, 'File size exceeds 100MB limit');
@@ -19,10 +18,8 @@ export const uploadFile = async (req: Request, res: Response, next: NextFunction
 
         const userId = req.userId!;
 
-        // Upload to S3 using utility function
         const { key, url } = await uploadToS3(req.file, userId);
 
-        // Save to database
         const dbFile = await prisma.file.create({
             data: {
                 filename: req.file.originalname,
@@ -58,7 +55,6 @@ export const bulkUploadFiles = async (req: Request, res: Response, next: NextFun
 
         for (const file of files) {
             try {
-                // Validate file size
                 const MAX_FILE_SIZE = 100 * 1024 * 1024;
                 if (file.size > MAX_FILE_SIZE) {
                     failed.push({
@@ -68,10 +64,8 @@ export const bulkUploadFiles = async (req: Request, res: Response, next: NextFun
                     continue;
                 }
 
-                // Upload to S3
                 const { key, url } = await uploadToS3(file, userId);
 
-                // Save to database
                 const dbFile = await prisma.file.create({
                     data: {
                         filename: file.originalname,
@@ -151,10 +145,8 @@ export const deleteFile = async (req: Request, res: Response, next: NextFunction
             throw new AppError(403, 'Not authorized');
         }
 
-        // Delete from S3 using utility function
         await deleteFromS3(file.s3Key);
 
-        // Delete from database
         await prisma.file.delete({ where: { id: fileId } });
 
         res.json({ message: 'File deleted successfully' });
@@ -173,21 +165,21 @@ export const downloadFile = async (req: Request, res: Response, next: NextFuncti
             throw new AppError(404, 'File not found');
         }
 
+        const presignedUrl = await getPresignedDownloadUrl(file.s3Key, 3600);
+
         res.json({
-            downloadUrl: file.filebaseUrl,
+            downloadUrl: presignedUrl,
             filename: file.filename
         });
     } catch (error) {
         next(error);
     }
 };
-
 export const shareFileWithUsers = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { fileId, userIds, expiryDays } = req.body as ShareFileInput;
         const ownerId = req.userId!;
 
-        // Check if file exists and user is owner
         const file = await prisma.file.findUnique({ where: { id: fileId } });
 
         if (!file) {
@@ -198,7 +190,6 @@ export const shareFileWithUsers = async (req: Request, res: Response, next: Next
             throw new AppError(403, 'Only owner can share this file');
         }
 
-        // Verify all users exist
         const users = await prisma.user.findMany({
             where: { id: { in: userIds } }
         });
@@ -207,18 +198,15 @@ export const shareFileWithUsers = async (req: Request, res: Response, next: Next
             throw new AppError(400, 'One or more users not found');
         }
 
-        // Prevent owner from sharing with themselves
         const validUserIds = userIds.filter((id) => id !== ownerId);
 
         if (validUserIds.length === 0) {
             throw new AppError(400, 'Cannot share with yourself');
         }
 
-        // Calculate expiry date
         const expiryDate =
             expiryDays && expiryDays > 0 ? new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000) : null;
 
-        // Create shares for each user
         const shares = await Promise.all(
             validUserIds.map((userId) =>
                 prisma.share.create({
@@ -297,14 +285,11 @@ export const getSharedWithMeFiles = async (req: Request, res: Response, next: Ne
     }
 };
 
-
-
 export const generateShareLink = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { fileId, expiryHours } = req.body;
         const userId = req.userId!;
 
-        // Check if file exists and user is owner
         const file = await prisma.file.findUnique({ where: { id: fileId } });
 
         if (!file) {
@@ -315,13 +300,10 @@ export const generateShareLink = async (req: Request, res: Response, next: NextF
             throw new AppError(403, 'Only owner can generate share link');
         }
 
-        // Generate unique shareLink
         const shareLink = crypto.randomBytes(32).toString('hex');
 
-        // Calculate expiry date
         const expiryDate = expiryHours ? new Date(Date.now() + expiryHours * 60 * 60 * 1000) : null;
 
-        // Create share record with link
         const share = await prisma.share.create({
             data: {
                 fileId,
@@ -347,9 +329,8 @@ export const generateShareLink = async (req: Request, res: Response, next: NextF
 export const accessShareLink = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const { shareLink } = req.params;
-        const userId = req.userId; // Will be undefined for non-authenticated users
+        const userId = req.userId;
 
-        // Find share by link
         const share = await prisma.share.findUnique({
             where: { shareLink },
             include: {
@@ -378,12 +359,10 @@ export const accessShareLink = async (req: Request, res: Response, next: NextFun
             throw new AppError(404, 'Invalid or expired share link');
         }
 
-        // Check if link is expired
         if (share.expiryDate && new Date(share.expiryDate) < new Date()) {
             throw new AppError(403, 'Share link has expired');
         }
 
-        // ✅ IMPORTANT: Only authenticated users can access
         if (!userId) {
             throw new AppError(401, 'Must be logged in to access shared files');
         }

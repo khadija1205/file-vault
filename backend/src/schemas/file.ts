@@ -9,10 +9,7 @@ export const uploadFileSchema = z.object({
 
 
 
-// export const shareFileSchema = z.object({
-//     fileId: z.string(),
-//     userId: z.string().optional()
-// });
+
 
 export const shareFileSchema = z.object({
     fileId: z.string().min(1, 'File ID required'),
