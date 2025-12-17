@@ -1,0 +1,65 @@
+    generator client {
+        provider = "prisma-client-js"
+    }
+
+    datasource db {
+        provider = "mongodb"
+        url = env("DATABASE_URL")
+    }
+
+    model User{
+        id String @id @default(auto()) @map("_id") @db.ObjectId
+        username String @unique
+        email String @unique
+        password String
+        files File[]
+        shares Share[]
+        sharedWith Share[] @relation("SharedWith")
+        createdAt DateTime @default(now())
+        updatedAt DateTime @updatedAt
+
+        @@map("users")
+    }
+
+
+    model File{
+        id String @id @default(auto()) @map("_id") @db.ObjectId
+        filename String
+        fileType String
+        fileSize Int
+        s3Key String         
+        s3Url String
+        owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+        ownerId String @db.ObjectId
+        filebaseUrl String
+        shares Share[]
+        createdAt DateTime @default(now())
+        updatedAt DateTime @updatedAt
+
+
+        @@index([ownerId])
+        @@map("files")
+
+    }
+
+
+    model Share {
+        id String @id @default(auto()) @map("_id") @db.ObjectId
+        file File @relation(fields: [fileId], references: [id], onDelete: Cascade)
+        fileId String @db.ObjectId
+        sharedBy User @relation(fields: [sharedById], references: [id], onDelete: Cascade)
+        sharedById String @db.ObjectId
+        sharedWith User? @relation("SharedWith", fields: [sharedById], references: [id], onDelete: Cascade)
+        sharedWithId String? @db.ObjectId
+        shareLink String? @unique
+        expiryDate DateTime?
+        createdAt DateTime @default(now())
+
+
+
+
+        @@index([fileId])
+        @@index([sharedById])
+        @@index([sharedWithId])
+        @@map("shares")
+    }
