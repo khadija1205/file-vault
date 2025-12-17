@@ -1,0 +1,25 @@
+services:
+    - type: web
+      name: file-sharing-backend
+      env: node
+      buildCommand: npm install && npm run prisma:generate && npm run build
+      startCommand: npm start
+      envVars:
+          - key: NODE_ENV
+            value: production
+          - key: DATABASE_URL
+            sync: false
+          - key: JWT_SECRET
+            sync: false
+          - key: JWT_EXPIRE
+            value: 7d
+          - key: FRONTEND_URL
+            sync: false
+          - key: AWS_REGION
+            sync: false
+          - key: AWS_ACCESS_KEY_ID
+            sync: false
+          - key: AWS_SECRET_ACCESS_KEY
+            sync: false
+          - key: AWS_S3_BUCKET
+            value: filevault-files-a1b2c3
