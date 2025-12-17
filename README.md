@@ -130,7 +130,7 @@ Frontend runs on `http://localhost:3000` or `http://localhost:5173`
 2. Block all public access (Permissions)
 3. Configure CORS (Permissions → CORS):
 json
-[
+-[
   {
     "AllowedOrigins": ["http://localhost:3000", "https://your-frontend.vercel.app"],
     "AllowedMethods": ["GET", "PUT", "POST", "DELETE"],
