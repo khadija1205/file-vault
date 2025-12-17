@@ -18,7 +18,8 @@ API.interceptors.request.use((config) => {
 export const authAPI = {
     register: (username: string, email: string, password: string) =>
         API.post('/auth/register', { username, email, password }),
-    login: (email: string, password: string) => API.post('/auth/login', { email, password })
+    login: (email: string, password: string) => API.post('/auth/login', { email, password }),
+    searchUserByEmail: (email: string) => API.get('/auth/search', { params: { email } })
 };
 
 // File API
@@ -35,9 +36,15 @@ export const fileAPI = {
 
 // Sharing API
 export const sharingAPI = {
-    shareWithUser: (fileId: string, userId: string) => API.post('/shares/share-user', { fileId, userId }),
-    generateLink: (fileId: string, expiryHours?: number) => API.post('/shares/generate-link', { fileId, expiryHours }),
-    accessSharedFile: (shareLink: string) => API.get(`/shares/link/${shareLink}`),
+    shareWithUsers: (fileId: string, userIds: string[], expiryDays?: number) =>
+        API.post('/files/share', { fileId, userIds, expiryDays }),
+
+    getSharedWithMe: () => API.get('/files/shared-with-me'),
+
+    generateLink: (fileId: string, expiryHours?: number) => API.post('/files/generate-link', { fileId, expiryHours }),
+
+    accessSharedFile: (shareLink: string) => API.get(`/files/link/${shareLink}`),
+
     revokeShare: (shareId: string) => API.delete(`/shares/${shareId}`)
 };
 
