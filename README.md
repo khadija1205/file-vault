@@ -42,7 +42,7 @@ https://filevault-phi.vercel.app
 
 ### Hosting
 - Frontend: Vercel
-- Backend: Render
+- Backend: Replit
 - Database: MongoDB Atlas
 - Storage: AWS S3
 
