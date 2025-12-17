@@ -1,20 +1,33 @@
 import { useState } from 'react';
-import { useGetFiles, useUploadFile, useDeleteFiles } from '../hooks/useFiles';
+import { useGetFiles, useUploadFile, useDeleteFiles, useShareFileWithUsers, useSearchUser } from '../hooks/useFiles';
 import { useNavigate } from 'react-router-dom';
 import { sharingAPI } from '../services/api';
 import { type File } from '../types';
-import { Upload, Link2, Trash2, X, Check, LogOut, File as FileIcon, FolderOpen } from 'lucide-react';
+import { Upload, Link2, Trash2, X, Check, LogOut, File as FileIcon, FolderOpen, Users, Loader } from 'lucide-react';
 
 export const Dashboard = () => {
     const navigate = useNavigate();
     const { data: files = [], isLoading } = useGetFiles();
     const { mutate: uploadFile, isPending: isUploading } = useUploadFile();
     const { mutate: deleteFile } = useDeleteFiles();
+    const { mutate: shareWithUsers, isPending: isSharing } = useShareFileWithUsers();
+
     const [selectedFile, setSelectedFile] = useState<globalThis.File | null>(null);
     const [shareLink, setShareLink] = useState('');
     const [showShareModal, setShowShareModal] = useState(false);
+    const [showUserShareModal, setShowUserShareModal] = useState(false);
     const [copiedLink, setCopiedLink] = useState(false);
     const [dragActive, setDragActive] = useState(false);
+
+    // User sharing state
+    const [selectedFileForShare, setSelectedFileForShare] = useState<File | null>(null);
+    const [emailInput, setEmailInput] = useState('');
+    const [selectedUsers, setSelectedUsers] = useState<Array<{ id: string; email: string; username: string }>>([]);
+    const [expiryDays, setExpiryDays] = useState(0);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+
+    // Search for user by email
+    const { data: searchResult, isLoading: isSearching } = useSearchUser(emailInput);
 
     const handleUpload = async () => {
         if (!selectedFile) return;
@@ -57,6 +70,60 @@ export const Dashboard = () => {
         } catch {
             alert('Failed to generate link');
         }
+    };
+
+    const handleShareWithUsers = (file: File) => {
+        setSelectedFileForShare(file);
+        setShowUserShareModal(true);
+        setEmailInput('');
+        setSelectedUsers([]);
+        setExpiryDays(0);
+    };
+
+    const handleAddUser = (user: any) => {
+        // Check if user already added
+        if (selectedUsers.find((u) => u.id === user.id)) {
+            alert('User already added');
+            return;
+        }
+
+        setSelectedUsers([...selectedUsers, user]);
+        setEmailInput('');
+        setShowSuggestions(false);
+    };
+
+    const handleRemoveUser = (userId: string) => {
+        setSelectedUsers(selectedUsers.filter((u) => u.id !== userId));
+    };
+
+    const submitUserShare = () => {
+        if (!selectedFileForShare || selectedUsers.length === 0) {
+            alert('Please select at least one user');
+            return;
+        }
+
+        const userIds = selectedUsers.map((u) => u.id);
+
+        shareWithUsers(
+            {
+                fileId: selectedFileForShare.id,
+                userIds,
+                expiryDays: expiryDays || undefined
+            },
+            {
+                onSuccess: () => {
+                    alert(`File shared with ${selectedUsers.length} user(s)!`);
+                    setShowUserShareModal(false);
+                    setEmailInput('');
+                    setSelectedUsers([]);
+                    setExpiryDays(0);
+                    setSelectedFileForShare(null);
+                },
+                onError: () => {
+                    alert('Failed to share file');
+                }
+            }
+        );
     };
 
     const copyToClipboard = () => {
@@ -262,11 +329,18 @@ export const Dashboard = () => {
                                             <td className="px-8 py-5">
                                                 <div className="flex items-center space-x-2">
                                                     <button
+                                                        onClick={() => handleShareWithUsers(file)}
+                                                        className="flex items-center space-x-1 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors text-sm font-medium"
+                                                    >
+                                                        <Users className="w-4 h-4" />
+                                                        <span>Share</span>
+                                                    </button>
+                                                    <button
                                                         onClick={() => handleGenerateLink(file)}
                                                         className="flex items-center space-x-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm font-medium"
                                                     >
                                                         <Link2 className="w-4 h-4" />
-                                                        <span>Share</span>
+                                                        <span>Link</span>
                                                     </button>
                                                     <button
                                                         onClick={() => handleDelete(file.id)}
@@ -284,6 +358,152 @@ export const Dashboard = () => {
                     )}
                 </div>
             </div>
+
+            {/* User Share Modal with Email Autocomplete */}
+            {showUserShareModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative">
+                        <button
+                            onClick={() => setShowUserShareModal(false)}
+                            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+
+                        <div className="flex items-center justify-center mb-6">
+                            <div className="bg-purple-100 p-4 rounded-full">
+                                <Users className="w-8 h-8 text-purple-600" />
+                            </div>
+                        </div>
+
+                        <h3 className="text-2xl font-bold text-center text-gray-900 mb-2">Share with Users</h3>
+                        <p className="text-center text-gray-500 mb-6">
+                            Share <span className="font-semibold">{selectedFileForShare?.filename}</span> with specific
+                            users
+                        </p>
+
+                        <div className="space-y-4 max-h-96 overflow-y-auto">
+                            {/* Email Input with Autocomplete */}
+                            <div className="relative">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Search by Email</label>
+                                <div className="relative">
+                                    <input
+                                        type="email"
+                                        value={emailInput}
+                                        onChange={(e) => {
+                                            setEmailInput(e.target.value);
+                                            setShowSuggestions(true);
+                                        }}
+                                        onFocus={() => setShowSuggestions(true)}
+                                        placeholder="user@example.com"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent outline-none"
+                                    />
+                                    {isSearching && (
+                                        <Loader className="absolute right-3 top-3 w-4 h-4 animate-spin text-purple-600" />
+                                    )}
+                                </div>
+
+                                {/* Autocomplete Suggestions */}
+                                {showSuggestions && emailInput && searchResult?.data && (
+                                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleAddUser(searchResult.data)}
+                                            className="w-full text-left px-4 py-2 hover:bg-purple-50 transition-colors flex items-center justify-between"
+                                        >
+                                            <div>
+                                                <p className="font-medium text-gray-900">
+                                                    {searchResult.data.username}
+                                                </p>
+                                                <p className="text-sm text-gray-600">{searchResult.data.email}</p>
+                                            </div>
+                                            <Check className="w-4 h-4 text-purple-600" />
+                                        </button>
+                                    </div>
+                                )}
+
+                                {showSuggestions && emailInput && !searchResult?.data && !isSearching && (
+                                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-10 p-3 text-center text-gray-600">
+                                        No user found
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Selected Users */}
+                            {selectedUsers.length > 0 && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Selected Users ({selectedUsers.length})
+                                    </label>
+                                    <div className="space-y-2 bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                        {selectedUsers.map((user) => (
+                                            <div
+                                                key={user.id}
+                                                className="flex items-center justify-between bg-white p-2 rounded border border-purple-200"
+                                            >
+                                                <div>
+                                                    <p className="font-medium text-gray-900 text-sm">{user.username}</p>
+                                                    <p className="text-xs text-gray-600">{user.email}</p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveUser(user.id)}
+                                                    className="text-red-600 hover:text-red-700 transition-colors"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Expiry Input */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Expiry (days) - Optional
+                                </label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    value={expiryDays}
+                                    onChange={(e) => setExpiryDays(Number(e.target.value))}
+                                    placeholder="0 = Never expires"
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent outline-none"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">Leave 0 for permanent access</p>
+                            </div>
+                        </div>
+
+                        <button
+                            onClick={submitUserShare}
+                            disabled={isSharing || selectedUsers.length === 0}
+                            className="w-full mt-6 bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all font-medium shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                        >
+                            {isSharing ? (
+                                <>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                    <span>Sharing...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Check className="w-5 h-5" />
+                                    <span>
+                                        Share with {selectedUsers.length} user{selectedUsers.length !== 1 ? 's' : ''}
+                                    </span>
+                                </>
+                            )}
+                        </button>
+
+                        <button
+                            onClick={() => setShowUserShareModal(false)}
+                            className="w-full mt-2 bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Share Link Modal */}
             {showShareModal && (
