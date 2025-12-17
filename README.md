@@ -60,16 +60,16 @@ npm install
 
 **Create .env file:**
 
-DATABASE_URL=mongodb+srv://username:password@cluster.mongodb.net/filevault
-JWT_SECRET=generate-random-32-char-string
-JWT_EXPIRE=7d
-PORT=5000
-NODE_ENV=development
-AWS_ACCESS_KEY_ID=your-access-key
-AWS_SECRET_ACCESS_KEY=your-secret-key
-AWS_REGION=ap-south-1
-AWS_S3_BUCKET_NAME=filevault-files-unique-name
-FRONTEND_URL=http://localhost:3000
+- DATABASE_URL=mongodb+srv://username:password@cluster.mongodb.net/filevault
+- JWT_SECRET=generate-random-32-char-string
+- JWT_EXPIRE=7d
+- PORT=5000
+- NODE_ENV=development
+- AWS_ACCESS_KEY_ID=your-access-key
+- AWS_SECRET_ACCESS_KEY=your-secret-key
+- AWS_REGION=ap-south-1
+- AWS_S3_BUCKET_NAME=filevault-files-unique-name
+- FRONTEND_URL=http://localhost:3000
 
 
 **Initialize database:**
