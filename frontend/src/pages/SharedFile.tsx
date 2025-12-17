@@ -43,13 +43,19 @@ export const SharedFile = () => {
                         <p>
                             <strong>Type:</strong> {file.fileType}
                         </p>
-                        <a
-                            href={file.fileUrl}
-                            download={file.filename}
-                            className="inline-block bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+                        <button
+                            onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = file.filebaseUrl;
+                                link.download = file.filename;
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                            }}
+                            className="inline-block bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 cursor-pointer"
                         >
                             Download File
-                        </a>
+                        </button>
                     </div>
                 )}
             </div>
