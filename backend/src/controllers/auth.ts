@@ -62,3 +62,30 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
         next(error);
     }
 };
+
+export const searchUserByEmail = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { email } = req.query;
+
+        if (!email || typeof email !== 'string') {
+            throw new AppError(400, 'Email required');
+        }
+
+        const user = await prisma.user.findUnique({
+            where: { email },
+            select: {
+                id: true,
+                username: true,
+                email: true
+            }
+        });
+
+        if (!user) {
+            throw new AppError(404, 'User not found');
+        }
+
+        res.json(user);
+    } catch (error) {
+        next(error);
+    }
+};
