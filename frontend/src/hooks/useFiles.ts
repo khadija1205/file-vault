@@ -41,17 +41,20 @@ export const useSearchUser = (email: string) => {
         queryKey: ['user', email],
         queryFn: () => authAPI.searchUserByEmail(email),
         enabled: email.length > 0 && email.includes('@'),
-        staleTime: 1000 * 60 * 5 // 5 minutes
+        staleTime: 1000 * 60 * 5 
     });
 };
 
-export const useGetSharedWithMe = () => {
+
+
+export const useGetSharedWithMeFiles = () => {
     return useQuery({
         queryKey: ['sharedWithMe'],
         queryFn: async () => {
             const response = await sharingAPI.getSharedWithMe();
-            return response.data.files;
-        }
+            return response.data.files || [];
+        },
+        staleTime: 1000 * 60 * 5 
     });
 };
 

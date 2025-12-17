@@ -1,13 +1,33 @@
 import { useState } from 'react';
-import { useGetFiles, useUploadFile, useDeleteFiles, useShareFileWithUsers, useSearchUser } from '../hooks/useFiles';
+import {
+    useGetFiles,
+    useUploadFile,
+    useDeleteFiles,
+    useShareFileWithUsers,
+    useSearchUser,
+    useGetSharedWithMeFiles
+} from '../hooks/useFiles';
 import { useNavigate } from 'react-router-dom';
 import { sharingAPI } from '../services/api';
 import { type File } from '../types';
-import { Upload, Link2, Trash2, X, Check, LogOut, File as FileIcon, FolderOpen, Users, Loader } from 'lucide-react';
+import {
+    Upload,
+    Link2,
+    Trash2,
+    X,
+    Check,
+    LogOut,
+    File as FileIcon,
+    FolderOpen,
+    Users,
+    Loader,
+    Share2
+} from 'lucide-react';
 
 export const Dashboard = () => {
     const navigate = useNavigate();
     const { data: files = [], isLoading } = useGetFiles();
+    const { data: sharedWithMeData = [] } = useGetSharedWithMeFiles();
     const { mutate: uploadFile, isPending: isUploading } = useUploadFile();
     const { mutate: deleteFile } = useDeleteFiles();
     const { mutate: shareWithUsers, isPending: isSharing } = useShareFileWithUsers();
@@ -18,6 +38,7 @@ export const Dashboard = () => {
     const [showUserShareModal, setShowUserShareModal] = useState(false);
     const [copiedLink, setCopiedLink] = useState(false);
     const [dragActive, setDragActive] = useState(false);
+    const [activeTab, setActiveTab] = useState<'my-files' | 'shared-with-me'>('my-files');
 
     // User sharing state
     const [selectedFileForShare, setSelectedFileForShare] = useState<File | null>(null);
@@ -75,13 +96,9 @@ export const Dashboard = () => {
     const handleShareWithUsers = (file: File) => {
         setSelectedFileForShare(file);
         setShowUserShareModal(true);
-        setEmailInput('');
-        setSelectedUsers([]);
-        setExpiryDays(0);
     };
 
     const handleAddUser = (user: any) => {
-        // Check if user already added
         if (selectedUsers.find((u) => u.id === user.id)) {
             alert('User already added');
             return;
@@ -199,167 +216,312 @@ export const Dashboard = () => {
             </header>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {/* Upload Section */}
-                <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
-                    <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
-                        <Upload className="w-5 h-5 mr-2 text-blue-600" />
-                        Upload File
-                    </h2>
+                
+                {activeTab === 'my-files' && (
+                    <div className="bg-white rounded-2xl shadow-lg p-8 mb-8">
+                        <h2 className="text-xl font-semibold text-gray-900 mb-6 flex items-center">
+                            <Upload className="w-5 h-5 mr-2 text-blue-600" />
+                            Upload File
+                        </h2>
 
-                    <div
-                        className={`relative border-2 border-dashed rounded-xl p-12 text-center transition-all ${
-                            dragActive ? 'border-blue-600 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
-                        }`}
-                        onDragEnter={handleDrag}
-                        onDragLeave={handleDrag}
-                        onDragOver={handleDrag}
-                        onDrop={handleDrop}
-                    >
-                        <input
-                            type="file"
-                            id="file-upload"
-                            className="hidden"
-                            onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                        />
+                        <div
+                            className={`relative border-2 border-dashed rounded-xl p-12 text-center transition-all ${
+                                dragActive ? 'border-blue-600 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
+                            }`}
+                            onDragEnter={handleDrag}
+                            onDragLeave={handleDrag}
+                            onDragOver={handleDrag}
+                            onDrop={handleDrop}
+                        >
+                            <input
+                                type="file"
+                                id="file-upload"
+                                className="hidden"
+                                onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                            />
 
-                        {selectedFile ? (
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-center space-x-3 text-green-600">
-                                    <Check className="w-6 h-6" />
-                                    <span className="font-medium">{selectedFile.name}</span>
-                                </div>
-                                <div className="flex justify-center space-x-3">
-                                    <button
-                                        onClick={handleUpload}
-                                        disabled={isUploading}
-                                        className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-md"
-                                    >
-                                        {isUploading ? 'Uploading...' : 'Upload File'}
-                                    </button>
-                                    <button
-                                        onClick={() => setSelectedFile(null)}
-                                        className="px-6 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
-                                    >
-                                        Cancel
-                                    </button>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="space-y-4">
-                                <div className="flex justify-center">
-                                    <div className="bg-blue-100 p-4 rounded-full">
-                                        <Upload className="w-8 h-8 text-blue-600" />
+                            {selectedFile ? (
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-center space-x-3 text-green-600">
+                                        <Check className="w-6 h-6" />
+                                        <span className="font-medium">{selectedFile.name}</span>
+                                    </div>
+                                    <div className="flex justify-center space-x-3">
+                                        <button
+                                            onClick={handleUpload}
+                                            disabled={isUploading}
+                                            className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-md"
+                                        >
+                                            {isUploading ? 'Uploading...' : 'Upload File'}
+                                        </button>
+                                        <button
+                                            onClick={() => setSelectedFile(null)}
+                                            className="px-6 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                                        >
+                                            Cancel
+                                        </button>
                                     </div>
                                 </div>
-                                <div>
-                                    <label
-                                        htmlFor="file-upload"
-                                        className="cursor-pointer text-blue-600 hover:text-blue-700 font-medium"
-                                    >
-                                        Click to upload
-                                    </label>
-                                    <span className="text-gray-500"> or drag and drop</span>
+                            ) : (
+                                <div className="space-y-4">
+                                    <div className="flex justify-center">
+                                        <div className="bg-blue-100 p-4 rounded-full">
+                                            <Upload className="w-8 h-8 text-blue-600" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label
+                                            htmlFor="file-upload"
+                                            className="cursor-pointer text-blue-600 hover:text-blue-700 font-medium"
+                                        >
+                                            Click to upload
+                                        </label>
+                                        <span className="text-gray-500"> or drag and drop</span>
+                                    </div>
+                                    <p className="text-sm text-gray-500">Any file type, up to 100MB</p>
                                 </div>
-                                <p className="text-sm text-gray-500">Any file type, up to 50MB</p>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                <div className="mb-6 border-b border-gray-200 bg-white rounded-t-2xl shadow-lg">
+                    <div className="flex">
+                        <button
+                            onClick={() => setActiveTab('my-files')}
+                            className={`px-8 py-4 font-medium flex items-center space-x-2 border-b-2 transition-colors ${
+                                activeTab === 'my-files'
+                                    ? 'border-blue-600 text-blue-600'
+                                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                            }`}
+                        >
+                            <FileIcon className="w-5 h-5" />
+                            <span>My Files</span>
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('shared-with-me')}
+                            className={`px-8 py-4 font-medium flex items-center space-x-2 border-b-2 transition-colors ${
+                                activeTab === 'shared-with-me'
+                                    ? 'border-blue-600 text-blue-600'
+                                    : 'border-transparent text-gray-600 hover:text-gray-900'
+                            }`}
+                        >
+                            <Share2 className="w-5 h-5" />
+                            <span>Shared with Me</span>
+                            {sharedWithMeData.length > 0 && (
+                                <span className="ml-2 bg-red-500 text-white rounded-full px-2 py-0.5 text-xs font-bold">
+                                    {sharedWithMeData.length}
+                                </span>
+                            )}
+                        </button>
+                    </div>
+                </div>
+
+               
+                {activeTab === 'my-files' && (
+                    <div className="bg-white rounded-b-2xl shadow-lg overflow-hidden">
+                        <div className="px-8 py-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+                            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                                <FileIcon className="w-5 h-5 mr-2 text-blue-600" />
+                                Your Files
+                                <span className="ml-3 text-sm font-normal text-gray-500">
+                                    ({files.length} {files.length === 1 ? 'file' : 'files'})
+                                </span>
+                            </h2>
+                        </div>
+
+                        {files.length === 0 ? (
+                            <div className="p-16 text-center">
+                                <div className="flex justify-center mb-4">
+                                    <div className="bg-gray-100 p-6 rounded-full">
+                                        <FolderOpen className="w-12 h-12 text-gray-400" />
+                                    </div>
+                                </div>
+                                <p className="text-gray-500 text-lg">No files uploaded yet</p>
+                                <p className="text-gray-400 text-sm mt-2">Upload your first file to get started</p>
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead>
+                                        <tr className="bg-gray-50 border-b border-gray-200">
+                                            <th className="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                                File
+                                            </th>
+                                            <th className="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                                Size
+                                            </th>
+                                            <th className="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                                Uploaded
+                                            </th>
+                                            <th className="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                                Actions
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200">
+                                        {files.map((file) => (
+                                            <tr key={file.id} className="hover:bg-gray-50 transition-colors">
+                                                <td className="px-8 py-5">
+                                                    <div className="flex items-center space-x-3">
+                                                        <span className="text-2xl">{getFileIcon(file.filename)}</span>
+                                                        <span className="font-medium text-gray-900">
+                                                            {file.filename}
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-8 py-5 text-gray-600">
+                                                    {formatFileSize(Number(file.fileSize))}
+                                                </td>
+                                                <td className="px-8 py-5 text-gray-600">
+                                                    {new Date(file.createdAt).toLocaleDateString('en-US', {
+                                                        year: 'numeric',
+                                                        month: 'short',
+                                                        day: 'numeric'
+                                                    })}
+                                                </td>
+                                                <td className="px-8 py-5">
+                                                    <div className="flex items-center space-x-2">
+                                                        <button
+                                                            onClick={() => handleShareWithUsers(file)}
+                                                            className="flex items-center space-x-1 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors text-sm font-medium"
+                                                        >
+                                                            <Users className="w-4 h-4" />
+                                                            <span>Share</span>
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleGenerateLink(file)}
+                                                            className="flex items-center space-x-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm font-medium"
+                                                        >
+                                                            <Link2 className="w-4 h-4" />
+                                                            <span>Link</span>
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDelete(file.id)}
+                                                            className="flex items-center space-x-1 px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         )}
                     </div>
-                </div>
+                )}
 
-                {/* Files List */}
-                <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-                    <div className="px-8 py-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
-                        <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                            <FileIcon className="w-5 h-5 mr-2 text-blue-600" />
-                            Your Files
-                            <span className="ml-3 text-sm font-normal text-gray-500">
-                                ({files.length} {files.length === 1 ? 'file' : 'files'})
-                            </span>
-                        </h2>
-                    </div>
+                
+                {activeTab === 'shared-with-me' && (
+                    <div className="bg-white rounded-b-2xl shadow-lg overflow-hidden">
+                        <div className="px-8 py-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+                            <h2 className="text-xl font-semibold text-gray-900 flex items-center">
+                                <Share2 className="w-5 h-5 mr-2 text-blue-600" />
+                                Shared with Me
+                                <span className="ml-3 text-sm font-normal text-gray-500">
+                                    ({sharedWithMeData.length} {sharedWithMeData.length === 1 ? 'file' : 'files'})
+                                </span>
+                            </h2>
+                        </div>
 
-                    {files.length === 0 ? (
-                        <div className="p-16 text-center">
-                            <div className="flex justify-center mb-4">
-                                <div className="bg-gray-100 p-6 rounded-full">
-                                    <FolderOpen className="w-12 h-12 text-gray-400" />
+                        {sharedWithMeData.length === 0 ? (
+                            <div className="p-16 text-center">
+                                <div className="flex justify-center mb-4">
+                                    <div className="bg-gray-100 p-6 rounded-full">
+                                        <Share2 className="w-12 h-12 text-gray-400" />
+                                    </div>
                                 </div>
+                                <p className="text-gray-500 text-lg">No files shared with you yet</p>
+                                <p className="text-gray-400 text-sm mt-2">Files shared with you will appear here</p>
                             </div>
-                            <p className="text-gray-500 text-lg">No files uploaded yet</p>
-                            <p className="text-gray-400 text-sm mt-2">Upload your first file to get started</p>
-                        </div>
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead>
-                                    <tr className="bg-gray-50 border-b border-gray-200">
-                                        <th className="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                            File
-                                        </th>
-                                        <th className="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                            Size
-                                        </th>
-                                        <th className="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                            Uploaded
-                                        </th>
-                                        <th className="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                            Actions
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-200">
-                                    {files.map((file) => (
-                                        <tr key={file.id} className="hover:bg-gray-50 transition-colors">
-                                            <td className="px-8 py-5">
-                                                <div className="flex items-center space-x-3">
-                                                    <span className="text-2xl">{getFileIcon(file.filename)}</span>
-                                                    <span className="font-medium text-gray-900">{file.filename}</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-8 py-5 text-gray-600">
-                                                {formatFileSize(Number(file.fileSize))}
-                                            </td>
-                                            <td className="px-8 py-5 text-gray-600">
-                                                {new Date(file.createdAt).toLocaleDateString('en-US', {
-                                                    year: 'numeric',
-                                                    month: 'short',
-                                                    day: 'numeric'
-                                                })}
-                                            </td>
-                                            <td className="px-8 py-5">
-                                                <div className="flex items-center space-x-2">
-                                                    <button
-                                                        onClick={() => handleShareWithUsers(file)}
-                                                        className="flex items-center space-x-1 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors text-sm font-medium"
-                                                    >
-                                                        <Users className="w-4 h-4" />
-                                                        <span>Share</span>
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleGenerateLink(file)}
-                                                        className="flex items-center space-x-1 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors text-sm font-medium"
-                                                    >
-                                                        <Link2 className="w-4 h-4" />
-                                                        <span>Link</span>
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDelete(file.id)}
-                                                        className="flex items-center space-x-1 px-3 py-1.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors text-sm font-medium"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            </td>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead>
+                                        <tr className="bg-gray-50 border-b border-gray-200">
+                                            <th className="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                                File
+                                            </th>
+                                            <th className="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                                Size
+                                            </th>
+                                            <th className="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                                Shared By
+                                            </th>
+                                            <th className="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                                Expires
+                                            </th>
+                                            <th className="px-8 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                                                Actions
+                                            </th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </div>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-200">
+                                        {sharedWithMeData.map((share: any) => (
+                                            <tr key={share.shareId} className="hover:bg-gray-50 transition-colors">
+                                                <td className="px-8 py-5">
+                                                    <div className="flex items-center space-x-3">
+                                                        <span className="text-2xl">
+                                                            {getFileIcon(share.file.filename)}
+                                                        </span>
+                                                        <span className="font-medium text-gray-900">
+                                                            {share.file.filename}
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-8 py-5 text-gray-600">
+                                                    {formatFileSize(Number(share.file.fileSize))}
+                                                </td>
+                                                <td className="px-8 py-5">
+                                                    <div>
+                                                        <p className="font-medium text-gray-900">
+                                                            {share.sharedBy.username}
+                                                        </p>
+                                                        <p className="text-sm text-gray-600">{share.sharedBy.email}</p>
+                                                    </div>
+                                                </td>
+                                                <td className="px-8 py-5 text-gray-600">
+                                                    {share.expiresAt ? (
+                                                        <span className="text-orange-600 font-medium">
+                                                            {new Date(share.expiresAt).toLocaleDateString('en-US', {
+                                                                year: 'numeric',
+                                                                month: 'short',
+                                                                day: 'numeric'
+                                                            })}
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-green-600 font-medium">Never</span>
+                                                    )}
+                                                </td>
+                                                <td className="px-8 py-5">
+                                                    <button
+                                                        onClick={() => {
+                                                            const link = document.createElement('a');
+                                                            link.href = share.file.filebaseUrl;
+                                                            link.download = share.file.filename;
+                                                            document.body.appendChild(link);
+                                                            link.click();
+                                                            document.body.removeChild(link);
+                                                        }}
+                                                        className="flex items-center space-x-1 px-3 py-1.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium"
+                                                    >
+                                                        <FileIcon className="w-4 h-4" />
+                                                        <span>Download</span>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
-            {/* User Share Modal with Email Autocomplete */}
+            
             {showUserShareModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
                     <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative">
@@ -383,7 +545,6 @@ export const Dashboard = () => {
                         </p>
 
                         <div className="space-y-4 max-h-96 overflow-y-auto">
-                            {/* Email Input with Autocomplete */}
                             <div className="relative">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">Search by Email</label>
                                 <div className="relative">
@@ -403,7 +564,6 @@ export const Dashboard = () => {
                                     )}
                                 </div>
 
-                                {/* Autocomplete Suggestions */}
                                 {showSuggestions && emailInput && searchResult?.data && (
                                     <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
                                         <button
@@ -429,7 +589,6 @@ export const Dashboard = () => {
                                 )}
                             </div>
 
-                            {/* Selected Users */}
                             {selectedUsers.length > 0 && (
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -458,7 +617,6 @@ export const Dashboard = () => {
                                 </div>
                             )}
 
-                            {/* Expiry Input */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Expiry (days) - Optional
@@ -505,7 +663,7 @@ export const Dashboard = () => {
                 </div>
             )}
 
-            {/* Share Link Modal */}
+          
             {showShareModal && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
                     <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative">
@@ -523,7 +681,9 @@ export const Dashboard = () => {
                         </div>
 
                         <h3 className="text-2xl font-bold text-center text-gray-900 mb-2">Share Link Generated!</h3>
-                        <p className="text-center text-gray-500 mb-6">Anyone with this link can access the file</p>
+                        <p className="text-center text-gray-500 mb-6">
+                            Anyone with this link can access the file (if logged in)
+                        </p>
 
                         <div className="bg-gray-50 rounded-lg p-4 mb-6 border border-gray-200">
                             <input

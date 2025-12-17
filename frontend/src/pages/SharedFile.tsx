@@ -11,7 +11,7 @@ export const SharedFile = () => {
     const { data: response, isLoading, error, isError } = useAccessSharedFile(shareLink || '');
 
     useEffect(() => {
-        // Check if user is logged in
+        
         const token = localStorage.getItem('token');
         setIsLoggedIn(!!token);
     }, []);
@@ -100,7 +100,7 @@ export const SharedFile = () => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
             <div className="max-w-2xl mx-auto">
-                {/* Header */}
+              
                 <div className="text-center mb-8">
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">Shared File</h1>
                     <p className="text-gray-600">
@@ -108,9 +108,9 @@ export const SharedFile = () => {
                     </p>
                 </div>
 
-                {/* File Card */}
+             
                 <div className="bg-white rounded-2xl shadow-lg p-8 space-y-6">
-                    {/* File Info */}
+                    
                     <div className="bg-gray-50 rounded-xl p-6 border border-gray-200">
                         <div className="space-y-4">
                             <div>
@@ -158,7 +158,7 @@ export const SharedFile = () => {
                         </div>
                     </div>
 
-                    {/* Download Button */}
+                  
                     <button
                         onClick={handleDownload}
                         className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all font-medium shadow-md flex items-center justify-center space-x-2 text-lg"
@@ -167,7 +167,7 @@ export const SharedFile = () => {
                         <span>Download File</span>
                     </button>
 
-                    {/* Back Button */}
+                  
                     <button
                         onClick={() => navigate('/dashboard')}
                         className="w-full bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 transition-colors font-medium"

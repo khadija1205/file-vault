@@ -26,7 +26,7 @@ export const Login = () => {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 px-4 py-12">
             <div className="max-w-md w-full">
-                {/* Logo/Brand Section */}
+               
                 <div className="text-center mb-8">
                     <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl shadow-lg mb-4">
                         <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -42,10 +42,10 @@ export const Login = () => {
                     <p className="text-gray-600">Sign in to access your files</p>
                 </div>
 
-                {/* Card Container */}
+               
                 <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                        {/* Email Field */}
+                       
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                                 Email Address
@@ -92,7 +92,7 @@ export const Login = () => {
                             )}
                         </div>
 
-                        {/* Password Field */}
+                        
                         <div>
                             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                                 Password
@@ -170,7 +170,7 @@ export const Login = () => {
                             )}
                         </div>
 
-                        {/* Remember Me & Forgot Password */}
+                    
                         <div className="flex items-center justify-between">
                             <div className="flex items-center">
                                 <input
@@ -193,7 +193,6 @@ export const Login = () => {
                             </Link>
                         </div>
 
-                        {/* Submit Button */}
                         <button
                             type="submit"
                             disabled={isPending}
@@ -228,7 +227,7 @@ export const Login = () => {
                         </button>
                     </form>
 
-                    {/* Divider */}
+                  
                     <div className="mt-6">
                         <div className="relative">
                             <div className="absolute inset-0 flex items-center">
@@ -240,7 +239,7 @@ export const Login = () => {
                         </div>
                     </div>
 
-                    {/* Register Link */}
+                
                     <div className="mt-6 text-center">
                         <p className="text-sm text-gray-600">
                             Don't have an account?{' '}
@@ -254,7 +253,7 @@ export const Login = () => {
                     </div>
                 </div>
 
-                {/* Footer */}
+                
                 <p className="mt-8 text-center text-xs text-gray-500">Protected by industry-standard encryption</p>
             </div>
         </div>
