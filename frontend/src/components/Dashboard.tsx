@@ -3,7 +3,7 @@ import { useGetFiles, useUploadFile, useDeleteFiles } from '../hooks/useFiles';
 import { useNavigate } from 'react-router-dom';
 import { sharingAPI } from '../services/api';
 import { type File } from '../types';
-import { Upload, Link2, Trash2, Download, X, Check, LogOut, File as FileIcon, FolderOpen } from 'lucide-react';
+import { Upload, Link2, Trash2, X, Check, LogOut, File as FileIcon, FolderOpen } from 'lucide-react';
 
 export const Dashboard = () => {
     const navigate = useNavigate();
